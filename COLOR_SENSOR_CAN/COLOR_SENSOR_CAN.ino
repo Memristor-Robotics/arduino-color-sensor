@@ -8,6 +8,8 @@
 #define S3 5
 #define sensorOut 4
 
+#define NODE_ID 2100 //define ID for this node
+
 #define CAN0_INT 2
 //#define DEBUG   //if ypu want to debug with serial communication uncomment this line
 
@@ -81,7 +83,7 @@ void loop()
     
     CAN0.readMsgBuf(&rxId, &len, rxBuf); //function for read message
     
-    if ((int)rxId == 2000) {    //check if ID is valid for this node 
+    if ((int)rxId == NODE_ID) {    //check if ID is valid for this node 
       if (len > 0) {            //check if message is recived
         
         #ifdef DEBUG            //just for debug if DEBUG macro is defined on the top
