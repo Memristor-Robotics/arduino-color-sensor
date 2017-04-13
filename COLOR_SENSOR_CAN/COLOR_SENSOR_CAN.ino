@@ -1,4 +1,3 @@
-
 #include <mcp_can.h>
 #include <SPI.h>
 
@@ -8,16 +7,17 @@
 #define S3 5
 #define sensorOut 4
 
-#define NODE_ID 2100 //define ID for this node
-
 #define CAN0_INT 2
 //#define DEBUG   //if ypu want to debug with serial communication uncomment this line
+
+const int NODE_ID = 1501; //define ID for this node
 
 long unsigned int rxId;
 unsigned char len = 0;
 unsigned char rxBuf[8];
 char msgString[128];
-int holdTime; 
+int holdTime;
+unsigned long lastUpdate = 0;
 
 MCP_CAN CAN0(9);     // Set CS to pin 9
 
@@ -39,6 +39,21 @@ unsigned char readFromSensor(char RGB){ //funstion for determining color
   
   return frequency; 
   
+}
+
+void sendToCAN() {
+    //arrayOfColors storage values of R G and B in an array 
+  unsigned char arrayOfColors[3] = {readFromSensor('R'), readFromSensor('G'), readFromSensor('B')};
+
+            
+   //if buffer is different of NULL, while CAN message is OK, 
+   //send feedback message, on every [buffer] seconds  
+          
+  while(CAN0.sendMsgBuf(NODE_ID, 0, 3, arrayOfColors) != CAN_OK);
+          
+  #ifdef DEBUG
+    Serial.println("Message sent");
+  #endif
 }
 
 
@@ -71,11 +86,15 @@ void setup()
   CAN0.setMode(MCP_NORMAL);   // Change to normal mode to allow messages to be transmitted
 }
 
-int i = 0;
+
+
+
 void loop()
 {
-  //arrayOfColors storage values of R G and B in an array 
-  unsigned char arrayOfColors[3] = {readFromSensor('R'), readFromSensor('G'), readFromSensor('B')};
+  if (holdTime != 0 && (lastUpdate + holdTime) < millis()) {
+      lastUpdate = millis();
+      sendToCAN();
+  }
   
   if(!digitalRead(CAN0_INT))             // If CAN0_INT pin is low, read receive buffer
   {
@@ -98,18 +117,14 @@ void loop()
           holdTime = (int)rxBuf[0];
           
           #ifdef DEBUG      //also for debug only
+            static int i = 0;
             Serial.print("BUF: ");
             Serial.print(rxBuf[0]);
             Serial.println();
             Serial.print("----------------");
             Serial.println(i++);
           #endif
-          
-          //if buffer is different of NULL, while CAN message is OK, 
-          //send feedback message, on every map(buffer) seconds  
-          while(CAN0.sendMsgBuf(2000, 0, 3, arrayOfColors) != CAN_OK);
-          delay(holdTime); 
-     
+
         }
       }
     }
