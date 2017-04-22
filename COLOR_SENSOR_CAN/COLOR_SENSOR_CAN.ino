@@ -8,7 +8,7 @@
 #define sensorOut 4
 
 #define CAN0_INT 2
-//#define DEBUG   //if ypu want to debug with serial communication uncomment this line
+#define DEBUG   //if ypu want to debug with serial communication uncomment this line
 
 const int NODE_ID = 1501; //define ID for this node
 
@@ -73,7 +73,7 @@ void setup()
     Serial.begin(115200);
   #endif
   // Initialize MCP2515 running at 16MHz with a baudrate of 125kb/s and the masks and filters disabled.
-  while (CAN0.begin(MCP_ANY, CAN_125KBPS, MCP_16MHZ) != CAN_OK) { 
+  while (CAN0.begin(MCP_ANY, CAN_500KBPS, MCP_16MHZ) != CAN_OK) { 
     #ifdef DEBUG
       Serial.println("Error Initializing MCP2515...");
     #endif
