@@ -1,5 +1,8 @@
 #include <mcp_can.h>
 #include <SPI.h>
+#include <Servo.h>
+
+Servo servo;
 
 #define S0 8        //from S0 to S3 and sensorOut depends on which sensor pins are connected to arduino
 #define S1 7
@@ -10,7 +13,8 @@
 #define CAN0_INT 2
 #define DEBUG   //if ypu want to debug with serial communication uncomment this line
 
-const int NODE_ID = 1501; //define ID for this node
+const int NODE_ID = 0x0000AB01; //define ID for this node
+const int SERVO_ID = 0x0000AB02;
 
 long unsigned int rxId;
 unsigned char len = 0;
@@ -68,6 +72,9 @@ void setup()
   // Setting frequency-scaling to 20%
   digitalWrite(S0,HIGH);
   digitalWrite(S1,LOW);
+
+  servo.attach(3);
+  servo.write(150);
   
   #ifdef DEBUG
     Serial.begin(115200);
@@ -83,14 +90,29 @@ void setup()
     Serial.println("MCP2515 Initialized Successfully!");
   #endif
 
+  //CAN Filters config
+  CAN0.initMask(0,1,0x000000FF);  //CAN Mask initialised 
+  CAN0.initFilt(0,1,0x0000AB01);  
+  CAN0.initFilt(1,1,0x0000AB02);
+
+  
   CAN0.setMode(MCP_NORMAL);   // Change to normal mode to allow messages to be transmitted
 }
 
-
-
-
 void loop()
 {
+ #ifdef DEBUG
+ int r = readFromSensor('R');
+ int g = readFromSensor('G'); 
+ int b = readFromSensor('B');
+ Serial.println(r);
+ Serial.println(g);
+ Serial.println(b);
+ Serial.println();
+ delay(1);
+ #endif
+
+  
   if (holdTime != 0 && (lastUpdate + holdTime) < millis()) {
       lastUpdate = millis();
       sendToCAN();
@@ -101,32 +123,33 @@ void loop()
     len = 0;
     
     CAN0.readMsgBuf(&rxId, &len, rxBuf); //function for read message
-    
-    if ((int)rxId == NODE_ID) {    //check if ID is valid for this node 
-      if (len > 0) {            //check if message is recived
-        
-        #ifdef DEBUG            //just for debug if DEBUG macro is defined on the top
-          Serial.print("Id:");    // it means that every step prints on serial
-          Serial.print((int)rxId);
-          Serial.println();
-        #endif
 
-        //master sends inside of buffer set of instructions
-        if (rxBuf[0] != 0) {     //if buffer is NULL it means that this node shouldn't send enything
+    switch ((int)rxId) {
+      case NODE_ID:
+        if (len > 0) {            //check if message is recived
           
-          holdTime = (int)rxBuf[0];
-          
-          #ifdef DEBUG      //also for debug only
-            static int i = 0;
-            Serial.print("BUF: ");
-            Serial.print(rxBuf[0]);
+          #ifdef DEBUG            //just for debug if DEBUG macro is defined on the top
+            Serial.print("Id:");    // it means that every step prints on serial
+            Serial.print((int)rxId);
             Serial.println();
-            Serial.print("----------------");
-            Serial.println(i++);
           #endif
-
+  
+            holdTime = (int)rxBuf[0];
+            
+            #ifdef DEBUG      //also for debug only
+              static int i = 0;
+              Serial.print("BUF: ");
+              Serial.print(rxBuf[0]);
+              Serial.println();
+              Serial.print("----------------");
+              Serial.println(i++);
+            #endif
         }
-      }
+        break;
+
+        case SERVO_ID:
+          servo.write(rxBuf[0]);
+          break;
     }
   }
 }
