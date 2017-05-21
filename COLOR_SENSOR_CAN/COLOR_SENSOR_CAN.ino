@@ -11,7 +11,7 @@ Servo servo;
 #define sensorOut 4
 
 #define CAN0_INT 2
-#define DEBUG   //if ypu want to debug with serial communication uncomment this line
+//#define DEBUG   //if ypu want to debug with serial communication uncomment this line
 
 const int NODE_ID = 0x0000AB01; //define ID for this node
 const int SERVO_ID = 0x0000AB02;
@@ -74,7 +74,7 @@ void setup()
   digitalWrite(S1,LOW);
 
   servo.attach(3);
-  servo.write(150);
+  servo.write(160);
   
   #ifdef DEBUG
     Serial.begin(115200);
@@ -91,9 +91,9 @@ void setup()
   #endif
 
   //CAN Filters config
-  CAN0.initMask(0,1,0x000000FF);  //CAN Mask initialised 
-  CAN0.initFilt(0,1,0x0000AB01);  
-  CAN0.initFilt(1,1,0x0000AB02);
+  CAN0.init_Mask(0,1,0x000000FF);  //CAN Mask initialised 
+  CAN0.init_Filt(0,1,0x0000AB01);  
+  CAN0.init_Filt(1,1,0x0000AB02);
 
   
   CAN0.setMode(MCP_NORMAL);   // Change to normal mode to allow messages to be transmitted
