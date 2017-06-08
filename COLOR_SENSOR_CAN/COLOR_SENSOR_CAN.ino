@@ -8,13 +8,18 @@ Servo servo;
 #define S1 7
 #define S2 6
 #define S3 5
+
+//uncoment for big robot "Glavonja"
 #define sensorOut 4
 
-#define CAN0_INT 2
-//#define DEBUG   //if ypu want to debug with serial communication uncomment this line
+//uncoment for small robot "Kalauz"
+//#define sensorOut 2
 
-const int NODE_ID = 0x0000AB01; //define ID for this node
-const int SERVO_ID = 0x0000AB02;
+#define CAN0_INT 2
+#define DEBUG   //if ypu want to debug with serial communication uncomment this line
+
+const unsigned long NODE_ID = 0x000005D1; //define ID for this node
+const unsigned long SERVO_ID = 0x000005D2;
 
 long unsigned int rxId;
 unsigned char len = 0;
@@ -74,13 +79,13 @@ void setup()
   digitalWrite(S1,LOW);
 
   servo.attach(3);
-  servo.write(160);
+  servo.write(130);
   
   #ifdef DEBUG
     Serial.begin(115200);
   #endif
   // Initialize MCP2515 running at 16MHz with a baudrate of 125kb/s and the masks and filters disabled.
-  while (CAN0.begin(MCP_ANY, CAN_500KBPS, MCP_16MHZ) != CAN_OK) { 
+  while (CAN0.begin(MCP_STDEXT, CAN_500KBPS, MCP_16MHZ) != CAN_OK) { 
     #ifdef DEBUG
       Serial.println("Error Initializing MCP2515...");
     #endif
@@ -91,9 +96,9 @@ void setup()
   #endif
 
   //CAN Filters config
-  CAN0.init_Mask(0,1,0x000000FF);  //CAN Mask initialised 
-  CAN0.init_Filt(0,1,0x0000AB01);  
-  CAN0.init_Filt(1,1,0x0000AB02);
+  CAN0.init_Mask(0,1,0xFFFFFFF0);  //CAN Mask initialised 
+  CAN0.init_Filt(0,1,NODE_ID);  
+  CAN0.init_Filt(1,1,SERVO_ID);
 
   
   CAN0.setMode(MCP_NORMAL);   // Change to normal mode to allow messages to be transmitted
